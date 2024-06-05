@@ -11,7 +11,7 @@ import (
 
 var SuccessCode int = 0
 var MaxLimitCode int = 1
-var host string = "http://localhost:8000"
+var host string = "http://localhost:8080"
 
 // Error represents our Error in JSON
 type Error struct {
@@ -20,8 +20,8 @@ type Error struct {
 }
 
 type Task struct {
-	ID     int64  `json:"id"`
-	UserID int64  `json:"user_id"`
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
 	Name   string `json:"name"`
 }
 

@@ -1,13 +1,16 @@
 ### Prerequisites
 
 - docker, docker-compose
-- go 1.17
+- go 1.20
 - mysql(client)
 
 ### Setup
-To build and start the server:
+To build:
 
-```docker-compose up --build togo```
+```docker-compose build```
+
+To start:
+```docker-compose up -d```
 
 To setup the database: 
 
@@ -15,7 +18,11 @@ To setup the database:
 
 ### Sample API 
 
-```curl -v http://localhost:8000/users/1/tasks -X "POST" -d "{\"name\":\"tests\"}"```
+Via HTTP/JSON API
+```curl -v http://localhost:8080/users/1/tasks -X "POST" -d "{\"name\":\"tests\"}"```
+
+Via gRPC/Protobuf
+```./bin/proto_client -addr "localhost:8081" -id 1 -name "tests"```
 
 ### Running tests
 

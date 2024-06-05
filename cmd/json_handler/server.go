@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"log"
 	"net/http"
 
@@ -12,27 +11,21 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var (
-	// command-line options:
-	// gRPC server endpoint
-	grpcServerEndpoint = flag.String("grpc-server-endpoint", "localhost:8000", "gRPC server endpoint")
-)
-
-func InitializeServer() {
+func InitializeServer(port string, protoEndpoint string) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	// Register gRPC server endpoint
 	// Note: Make sure the gRPC server is running properly and accessible
-	mux := runtime.NewServeMux()
+	mux := runtime.NewServeMux(runtime.WithForwardResponseOption(httpResponseModifier))
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	err := genproto.RegisterTaskServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
+	err := genproto.RegisterTaskServiceHandlerFromEndpoint(ctx, mux, protoEndpoint, opts)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
-	http.ListenAndServe(":8081", mux)
+	http.ListenAndServe(":"+port, mux)
 }

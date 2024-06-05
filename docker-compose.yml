@@ -1,5 +1,3 @@
-version: "3.9"
-    
 services:
   db:
     image: mysql/mysql-server:8.0
@@ -11,9 +9,19 @@ services:
       MYSQL_PASSWORD: togo 
     ports: 
       - "3001:3306"
-  togo:
-    build: .
+  togo-proto:
+    build: 
+      context: .
+      dockerfile: Dockerfile-proto-handler
     ports: 
-      - "8000:8000"
+      - "8081:8081"
     depends_on:
       - db
+  json-proto:
+    build: 
+      context: .
+      dockerfile: Dockerfile-json-handler
+    ports: 
+      - "8080:8080"
+    depends_on:
+      - togo-proto

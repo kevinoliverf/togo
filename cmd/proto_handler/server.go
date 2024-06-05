@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net"
+	"time"
 
 	"github.com/kozloz/togo/internal/genproto"
 	"github.com/kozloz/togo/internal/store/mysql"
@@ -11,14 +12,17 @@ import (
 	"google.golang.org/grpc"
 )
 
-func InitializeServer() {
+func InitializeServer(port string) {
 	// Setup storage
 	// Hard code db connection parameters for now
 	store, err := mysql.NewStore("togo", "db", "3306", "togo", "togo")
-	if err != nil {
-		panic(err)
+	for i := 0; i < 2; i++ {
+		if err == nil {
+			time.Sleep(3 * time.Second)
+			break
+		}
+		store, err = mysql.NewStore("togo", "db", "3306", "togo", "togo")
 	}
-
 	// Initialize operation classes
 	userOp := users.NewOperation(store)
 	taskOp := tasks.NewOperation(store, userOp)
@@ -28,7 +32,7 @@ func InitializeServer() {
 		op: taskOp,
 	}
 
-	lis, err := net.Listen("tcp", ":8000")
+	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

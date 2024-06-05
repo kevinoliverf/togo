@@ -31,12 +31,12 @@ import (
 )
 
 const (
-	defaultName = "world"
+	defaultName = "task"
 	defaultId   = 1
 )
 
 var (
-	addr   = flag.String("addr", "localhost:8000", "the address to connect to")
+	addr   = flag.String("addr", "localhost:8081", "the address to connect to")
 	userid = flag.Int("id", defaultId, "user id")
 	name   = flag.String("name", defaultName, "name")
 )

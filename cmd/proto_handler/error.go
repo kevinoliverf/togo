@@ -7,12 +7,6 @@ import (
 	"github.com/kozloz/togo/internal/genproto"
 )
 
-// Error represents our Error in JSON
-type Error struct {
-	ErrorCode int    `json:"err_code"`
-	ErrorDesc string `json:"err_desc"`
-}
-
 // Converts the error to our JSON Error type
 func CustomErrorToProto(err error) genproto.Error {
 	var cerr customError.Error
