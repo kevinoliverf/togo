@@ -5,6 +5,10 @@
 - mysql(client)
 
 ### Setup
+To generate protobuf code:
+
+```protoc -I proto/ --go_out . --go-grpc_out . --grpc-gateway_out . proto/togo.proto```
+
 To build:
 
 ```docker-compose build```
@@ -19,9 +23,11 @@ To setup the database:
 ### Sample API 
 
 Via HTTP/JSON API
+
 ```curl -v http://localhost:8080/users/1/tasks -X "POST" -d "{\"name\":\"tests\"}"```
 
 Via gRPC/Protobuf
+
 ```./bin/proto_client -addr "localhost:8081" -id 1 -name "tests"```
 
 ### Running tests
