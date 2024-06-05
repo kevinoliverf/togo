@@ -7,7 +7,8 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/kozloz/togo"
+	"github.com/kozloz/togo/internal/genproto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const TimeFormat = "2006-01-02 15:04:05"
@@ -34,7 +35,7 @@ func NewStore(dbName string, host string, port string, user string, pass string)
 	}, nil
 }
 
-func (s *Store) CreateTask(userID int64, task string) (*togo.Task, error) {
+func (s *Store) CreateTask(userID int64, task string) (*genproto.Task, error) {
 	log.Println("Creating task in database")
 	query := `
 		INSERT INTO tasks (user_id, name) values(?,?)
@@ -46,14 +47,14 @@ func (s *Store) CreateTask(userID int64, task string) (*togo.Task, error) {
 	}
 	id, _ := res.LastInsertId()
 
-	return &togo.Task{
+	return &genproto.Task{
 		ID:     id,
 		UserID: userID,
 		Name:   task,
 	}, nil
 }
 
-func (s *Store) GetUserTasks(userID int64) ([]*togo.Task, error) {
+func (s *Store) GetUserTasks(userID int64) ([]*genproto.Task, error) {
 	log.Printf("Getting tasks of user '%d'.", userID)
 	query := `
 		SELECT id, name from tasks where user_id = ?
@@ -64,9 +65,9 @@ func (s *Store) GetUserTasks(userID int64) ([]*togo.Task, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var tasks []*togo.Task
+	var tasks []*genproto.Task
 	for rows.Next() {
-		task := &togo.Task{}
+		task := &genproto.Task{}
 		err := rows.Scan(&task.ID, &task.Name)
 		if err != nil {
 			log.Printf("Failed to scan user task with error: '%v'", err)
@@ -77,11 +78,11 @@ func (s *Store) GetUserTasks(userID int64) ([]*togo.Task, error) {
 	return tasks, nil
 }
 
-func (s *Store) GetUser(userID int64) (*togo.User, error) {
+func (s *Store) GetUser(userID int64) (*genproto.User, error) {
 	log.Printf("Getting user with id '%d'", userID)
 
 	// Get user state
-	user := &togo.User{}
+	user := &genproto.User{}
 	selectUserQuery := `
 		SELECT id, daily_limit from users where id = ?
 	`
@@ -109,7 +110,7 @@ func (s *Store) GetUser(userID int64) (*togo.User, error) {
 	user.Tasks = tasks
 
 	// Get user daily counter
-	counter := &togo.DailyCounter{}
+	counter := &genproto.DailyCounter{}
 	counterRow := s.db.QueryRow(selectCounterQuery, userID)
 	lastUpdatedStr := ""
 	err = counterRow.Scan(&counter.DailyCount, &lastUpdatedStr)
@@ -121,29 +122,29 @@ func (s *Store) GetUser(userID int64) (*togo.User, error) {
 		log.Printf("Failed to query user counters with error: '%v'.", err)
 		return nil, err
 	}
-	counter.LastUpdated, _ = time.Parse(TimeFormat, lastUpdatedStr)
+	timestamp, _ := time.Parse(TimeFormat, lastUpdatedStr)
+	counter.LastUpdated = timestamppb.New(timestamp)
 	user.DailyCounter = counter
 
 	return user, nil
 }
-func (s *Store) CreateUser(userID int64) (*togo.User, error) {
+func (s *Store) CreateUser(userID int64) (*genproto.User, error) {
 	log.Println("Creating user in database")
 	query := `
 		INSERT INTO users (id, daily_limit) values(?,0)
 	`
-	res, err := s.db.Exec(query, userID)
+	_, err := s.db.Exec(query, userID)
 	if err != nil {
 		log.Printf("Failed to create user with error: '%v'.", err)
 		return nil, err
 	}
-	id, _ := res.LastInsertId()
 
-	return &togo.User{
-		ID: id,
+	return &genproto.User{
+		ID: userID,
 	}, nil
 }
 
-func (s *Store) UpdateUser(user *togo.User) (*togo.User, error) {
+func (s *Store) UpdateUser(user *genproto.User) (*genproto.User, error) {
 	log.Println("Updating user in database")
 
 	// Update user object
@@ -158,8 +159,8 @@ func (s *Store) UpdateUser(user *togo.User) (*togo.User, error) {
 		 INSERT INTO user_daily_counters (daily_count, last_updated, user_id) VALUES(?,?,?) 
 		 ON DUPLICATE KEY UPDATE daily_count = ?, last_updated = ?
 	`
-	_, err := s.db.Exec(query, user.DailyCounter.DailyCount, user.DailyCounter.LastUpdated, user.ID,
-		user.DailyCounter.DailyCount, user.DailyCounter.LastUpdated)
+	_, err := s.db.Exec(query, user.DailyCounter.DailyCount, user.DailyCounter.LastUpdated.AsTime(), user.ID,
+		user.DailyCounter.DailyCount, user.DailyCounter.LastUpdated.AsTime())
 	if err != nil {
 		log.Printf("Failed to update user with error: '%v'.", err)
 		return nil, err

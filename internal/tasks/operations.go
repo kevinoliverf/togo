@@ -4,14 +4,15 @@ import (
 	"log"
 	"time"
 
-	"github.com/kozloz/togo"
 	"github.com/kozloz/togo/internal/errors"
+	"github.com/kozloz/togo/internal/genproto"
 	"github.com/kozloz/togo/internal/users"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // TaskStore defines the interface needed to store the Task resource.
 type TaskStore interface {
-	CreateTask(userID int64, task string) (*togo.Task, error)
+	CreateTask(userID int64, task string) (*genproto.Task, error)
 }
 
 // Operation is meant to be a reusable class to handle the Task resource and logic.
@@ -30,7 +31,7 @@ func NewOperation(store TaskStore, userOp *users.Operation) *Operation {
 }
 
 // Create the task for the user
-func (o *Operation) Create(userID int64, taskName string) (*togo.Task, error) {
+func (o *Operation) Create(userID int64, taskName string) (*genproto.Task, error) {
 	log.Printf("Creating task '%s' for user '%d'.", taskName, userID)
 	// Get user object
 	user, err := o.userOperation.Get(userID)
@@ -51,7 +52,7 @@ func (o *Operation) Create(userID int64, taskName string) (*togo.Task, error) {
 	var counterMonth time.Month
 	todayYear, todayMonth, todayDay := time.Now().Date()
 	if user.DailyCounter != nil && user.DailyLimit > 0 {
-		counterYear, counterMonth, counterDay = user.DailyCounter.LastUpdated.Date()
+		counterYear, counterMonth, counterDay = user.DailyCounter.LastUpdated.AsTime().Date()
 		if counterYear == todayYear && counterMonth == todayMonth && counterDay == todayDay &&
 			user.DailyCounter.DailyCount >= user.DailyLimit {
 			log.Printf("Max daily limit of '%d' reached for today", user.DailyLimit)
@@ -68,7 +69,7 @@ func (o *Operation) Create(userID int64, taskName string) (*togo.Task, error) {
 	// Check counter logic only if a limit exists for the user
 	if user.DailyLimit > 0 {
 		if user.DailyCounter == nil {
-			user.DailyCounter = &togo.DailyCounter{
+			user.DailyCounter = &genproto.DailyCounter{
 				UserID: user.ID,
 			}
 		}
@@ -76,7 +77,7 @@ func (o *Operation) Create(userID int64, taskName string) (*togo.Task, error) {
 		// Reset the daily counter if last recorded was a different day
 		if !(counterYear == todayYear && counterMonth == todayMonth && counterDay == todayDay) {
 			user.DailyCounter.DailyCount = 0
-			user.DailyCounter.LastUpdated = time.Now()
+			user.DailyCounter.LastUpdated = timestamppb.Now()
 		}
 
 		user.DailyCounter.DailyCount++

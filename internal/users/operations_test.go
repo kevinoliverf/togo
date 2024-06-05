@@ -2,10 +2,10 @@ package users
 
 import (
 	"testing"
-	"time"
 
-	"github.com/kozloz/togo"
+	"github.com/kozloz/togo/internal/genproto"
 	"github.com/kozloz/togo/internal/store/test"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var op *Operation
@@ -53,17 +53,17 @@ func TestUpdate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to get user with error %v", err)
 	}
-	testTask := &togo.Task{
+	testTask := &genproto.Task{
 		ID:     2,
 		UserID: int64(userID),
 		Name:   "testtest",
 	}
 	tasks := append(user.Tasks, testTask)
 	user.Tasks = tasks
-	counter := &togo.DailyCounter{
+	counter := &genproto.DailyCounter{
 		UserID:      user.ID,
 		DailyCount:  5,
-		LastUpdated: time.Now(),
+		LastUpdated: timestamppb.Now(),
 	}
 	user.DailyCounter = counter
 	user, err = op.Update(user)

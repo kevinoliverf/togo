@@ -1,16 +1,17 @@
 
-FROM golang:1.17
+FROM arm64v8/golang:1.20
 
 WORKDIR /app
 
 COPY go.* ./
 RUN go mod download
 
-COPY . ./
 
+COPY . ./
+RUN go mod tidy
 RUN go build -v -o bin/ all 
 
 
 EXPOSE 8000
 
-CMD [ "bin/json_handler" ]
+CMD [ "bin/proto_handler" ]

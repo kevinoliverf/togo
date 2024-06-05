@@ -1,0 +1,50 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+package togo;
+
+option go_package = "internal/genproto";
+message Task{
+    int64 ID = 1 [json_name="id"];
+    int64 UserID = 2 [json_name="user_id"];
+    string Name = 3 [json_name="name"];
+}
+
+message Error{
+    int32 ErrorCode = 1 [json_name="err_code"];
+    string ErrorDesc = 2 [json_name="err_desc"];
+}
+
+message User{
+    int64 ID = 1 [json_name="id"];
+    repeated Task Tasks = 2;
+    int32 DailyLimit = 3;
+    DailyCounter DailyCounter = 4;
+}
+
+message DailyCounter{
+    int64 ID = 1;
+    int64 UserID = 2;
+    int32 DailyCount = 3;
+   google.protobuf.Timestamp LastUpdated = 4;
+}
+
+message CreateTaskRequest{
+    int64 userID = 1;
+    string name = 2;
+}
+
+message CreateTaskResponse{
+   Error error = 1; 
+   Task task = 2;
+}
+
+service TaskService{
+    rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse){
+    option (google.api.http) = {
+      post: "/users/{userID}/tasks"
+      body: "*"
+    };
+    }
+}

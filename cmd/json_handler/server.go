@@ -1,36 +1,38 @@
 package main
 
 import (
+	"context"
+	"flag"
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
-	"github.com/kozloz/togo/internal/store/mysql"
-	"github.com/kozloz/togo/internal/tasks"
-	"github.com/kozloz/togo/internal/users"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/kozloz/togo/internal/genproto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+)
+
+var (
+	// command-line options:
+	// gRPC server endpoint
+	grpcServerEndpoint = flag.String("grpc-server-endpoint", "localhost:8000", "gRPC server endpoint")
 )
 
 func InitializeServer() {
-	// Setup storage
-	// Hard code db connection parameters for now
-	store, err := mysql.NewStore("togo", "db", "3306", "togo", "togo")
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	// Register gRPC server endpoint
+	// Note: Make sure the gRPC server is running properly and accessible
+	mux := runtime.NewServeMux()
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
+	err := genproto.RegisterTaskServiceHandlerFromEndpoint(ctx, mux, *grpcServerEndpoint, opts)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
+		return
 	}
 
-	// Initialize operation classes
-	userOp := users.NewOperation(store)
-	taskOp := tasks.NewOperation(store, userOp)
-
-	// Create the server
-	taskHandler := TaskHandler{
-		op: taskOp,
-	}
-	router := mux.NewRouter()
-
-	// RESTful API for creating a task. A user is required to make a task.
-	router.HandleFunc("/users/{id}/tasks", taskHandler.CreateTask).Methods(http.MethodPost)
-
-	// Start the server
-	log.Fatal(http.ListenAndServe(":8000", router))
+	// Start HTTP server (and proxy calls to gRPC server endpoint)
+	http.ListenAndServe(":8081", mux)
 }
