@@ -22,7 +22,7 @@ var user2 *genproto.User = &genproto.User{
 	DailyLimit: 2,
 	DailyCounter: &genproto.DailyCounter{
 		DailyCount:  3,
-		LastUpdated: timestamppb.New(timestamppb.Now().AsTime().Add(-24 * time.Hour)),
+		LastUpdated: timestamppb.New(time.Now().Add((-24 * time.Hour))),
 	},
 }
 
