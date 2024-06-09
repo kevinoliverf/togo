@@ -1,18 +1,18 @@
 package eventhandler
 
-// EventRegistry is responsible for registering event handlers and dispatching events
+// EventRegistry is responsible for registering command object serializers
 type EventRegistry struct {
-	handlers map[string]CommandSerializer
+	handlers map[string]CommandDeserializer
 }
 
 // NewEventRegistry creates a new EventRegistry instance
 func NewEventRegistry() *EventRegistry {
 	return &EventRegistry{
-		handlers: make(map[string]CommandSerializer),
+		handlers: make(map[string]CommandDeserializer),
 	}
 }
 
-// RegisterHandler registers an event handler for a specific event type
-func (r *EventRegistry) RegisterHandler(eventType string, serializer CommandSerializer) {
+// RegisterHandler registers a command serializer for a specific command type
+func (r *EventRegistry) RegisterHandler(eventType string, serializer CommandDeserializer) {
 	r.handlers[eventType] = serializer
 }

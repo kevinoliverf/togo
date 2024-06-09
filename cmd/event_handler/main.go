@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 
 	"github.com/kozloz/togo/internal/aws"
 	"github.com/kozloz/togo/internal/events"
@@ -16,9 +17,20 @@ var (
 
 func main() {
 	flag.Parse()
-	client, _ := aws.NewClient(*queueURL)
+
+	// Create AWS SQS Client
+	client, err := aws.NewClient(*queueURL)
+	if err != nil {
+		log.Fatalf("Could not create aws client: %v", err)
+	}
+
+	// Create Event Processor
 	processor := eventhandler.NewEventProcessor(client, 1, 10)
-	processor.RegisterHandler("Test", events.NewCreateTaskCmdSerializer(*addr))
+
+	// Register Create Task Command Serializer
+	processor.RegisterHandler(events.CreateTaskCmdType, events.NewCreateTaskCmdSerializer(*addr))
+
+	// Start the processor
 	processor.Start(context.TODO())
 
 }

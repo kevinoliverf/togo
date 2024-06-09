@@ -1,56 +1,31 @@
 package aws
 
 import (
-	"fmt"
+	"context"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	eventhandler "github.com/kozloz/togo/pkg/event_handler"
 )
 
-type Client struct {
+type SQSClient struct {
 	eventhandler.EventSource
-	session  *session.Session
 	queueURL string
-	client   *sqs.SQS
+	client   *sqs.Client
 }
 
-func NewClient(queueURL string) (*Client, error) {
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("ap-southeast-2")},
-	)
+func NewClient(queueURL string) (*SQSClient, error) {
+	// Create a SQS service client.
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithClientLogMode(aws.LogRetries|aws.LogRequest),
+		config.WithRegion("ap-southeast-2"))
 	if err != nil {
 		return nil, err
 	}
 
-	// Create a SQS service client.
-
-	return &Client{
-		session:  sess,
-		client:   sqs.New(sess),
+	return &SQSClient{
+		client:   sqs.NewFromConfig(cfg),
 		queueURL: queueURL,
 	}, nil
-}
-
-type SQSEvent struct {
-	eventhandler.Event
-	ID      string
-	GroupID string
-	Body    string
-}
-
-func (s *SQSEvent) GetID() string {
-	return s.ID
-}
-func (s *SQSEvent) GetType() string {
-	return s.GroupID
-}
-
-func (s *SQSEvent) GetBody() string {
-	return s.Body
-}
-
-func (s *SQSEvent) String() string {
-	return fmt.Sprintf("ID: %s, GroupID: %s, Body: %s\n", s.ID, s.GroupID, s.Body)
 }

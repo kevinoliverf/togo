@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// EventProcessor is responsible for fetching and processing events
 type EventProcessor struct {
 	*EventRegistry
 	queue          chan Event
@@ -82,7 +83,7 @@ func (e *EventProcessor) Process(ctx context.Context) {
 				log.Fatal("No handler registered for event type:", event.GetType())
 				continue
 			}
-			command, err := serializer.Serialize(ctx, event.GetBody())
+			command, err := serializer.Deserialize(ctx, event.GetBody())
 			if err != nil {
 				log.Fatal("Error deserializing event:", err)
 				continue

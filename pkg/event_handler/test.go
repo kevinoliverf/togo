@@ -54,9 +54,9 @@ func (t *TestCommand) String() string {
 	return t.command
 }
 
-type TestCommandSerializer struct {
+type TestCommandDeserializer struct {
 }
 
-func (t *TestCommandSerializer) Serialize(ctx context.Context, command string) (Command, error) {
+func (t *TestCommandDeserializer) Deserialize(ctx context.Context, command string) (Command, error) {
 	return &TestCommand{command}, nil
 }

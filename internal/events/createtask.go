@@ -12,6 +12,11 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+const (
+	CreateTaskCmdType = "TogoCreateTask"
+)
+
+// CreateTaskCommand is a Command to create a todo task
 type CreateTaskCommand struct {
 	eventhandler.Command
 	ProtoEncoded []byte
@@ -19,18 +24,21 @@ type CreateTaskCommand struct {
 }
 
 func (e *CreateTaskCommand) Execute(ctx context.Context) {
-	// Contact the server and print out its response.
 	req := genproto.CreateTaskRequest{}
+
+	// Decode the base64 encoded proto
 	protobuf, err := base64.StdEncoding.DecodeString(string(e.ProtoEncoded))
 	if err != nil {
 		log.Fatalf("could not decode: %v", err)
 	}
 
+	// Unmarshal the proto
 	err = proto.Unmarshal(protobuf, &req)
 	if err != nil {
 		log.Fatalf("could not unmarshal: %v", err)
 	}
 
+	// Call the gRPC service
 	r, err := e.conn.CreateTask(ctx, &req)
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
@@ -42,23 +50,27 @@ func (e *CreateTaskCommand) String() string {
 	return string(e.ProtoEncoded)
 }
 
-type CreateTaskCmdSerializer struct {
-	eventhandler.CommandSerializer
+// CreateTaskCmdDeserializer is a CommandSerializer for CreateTaskCommand
+type CreateTaskCmdDeserializer struct {
+	eventhandler.CommandDeserializer
 	conn genproto.TaskServiceClient
 }
 
-func NewCreateTaskCmdSerializer(addr string) *CreateTaskCmdSerializer {
+// NewCreateTaskCmdSerializer creates a new CreateTaskCmdSerializer
+func NewCreateTaskCmdSerializer(addr string) *CreateTaskCmdDeserializer {
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		log.Fatalf("could not create client: %v", err)
+		return nil
 	}
 	c := genproto.NewTaskServiceClient(conn)
-	return &CreateTaskCmdSerializer{
+	return &CreateTaskCmdDeserializer{
 		conn: c,
 	}
 }
 
-func (s *CreateTaskCmdSerializer) Serialize(ctx context.Context, command string) (eventhandler.Command, error) {
+// Serialize deserializes a string into a CreateTaskCommand and includes the gRPC client
+func (s *CreateTaskCmdDeserializer) Deserialize(ctx context.Context, command string) (eventhandler.Command, error) {
 	return &CreateTaskCommand{
 		ProtoEncoded: []byte(command),
 		conn:         s.conn,

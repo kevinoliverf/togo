@@ -2,61 +2,70 @@ package aws
 
 import (
 	"context"
-	"fmt"
 	"log"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	eventhandler "github.com/kozloz/togo/pkg/event_handler"
 )
 
-func (c *Client) Fetch(ctx context.Context) ([]eventhandler.Event, error) {
-	result, err := c.client.ReceiveMessage(&sqs.ReceiveMessageInput{
-		AttributeNames: []*string{
-			aws.String(sqs.MessageSystemAttributeNameSentTimestamp),
-			aws.String(sqs.MessageSystemAttributeNameMessageGroupId),
+func (c *SQSClient) Fetch(ctx context.Context) ([]eventhandler.Event, error) {
+	// Receive messages from the SQS queue
+	result, err := c.client.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
+		MessageSystemAttributeNames: []types.MessageSystemAttributeName{
+			types.MessageSystemAttributeNameSentTimestamp,
+			types.MessageSystemAttributeNameMessageGroupId,
 		},
-		MessageAttributeNames: []*string{
-			aws.String(sqs.QueueAttributeNameAll),
+		MessageAttributeNames: []string{
+			"All",
 		},
 		QueueUrl:            &c.queueURL,
-		MaxNumberOfMessages: aws.Int64(10),
-		VisibilityTimeout:   aws.Int64(60), // 60 seconds
-		WaitTimeSeconds:     aws.Int64(0),
+		MaxNumberOfMessages: 10,
+		VisibilityTimeout:   60, // 60 seconds
+		WaitTimeSeconds:     0,
 	})
 	if err != nil {
-		fmt.Println("Error", err)
+		log.Printf("Error receiving message with error %v", err)
 		return nil, err
 	}
 	if len(result.Messages) == 0 {
-		fmt.Println("Received no messages")
+		log.Printf("Received no messages")
 		return nil, nil
 	}
-	_, err = c.client.DeleteMessage(&sqs.DeleteMessageInput{
-		QueueUrl:      &c.queueURL,
-		ReceiptHandle: result.Messages[0].ReceiptHandle,
-	})
 
-	if err != nil {
-		fmt.Println("Delete Error", err)
-		return nil, err
-	}
-	fmt.Printf("Success: %+v\n", result.Messages)
-
+	var messageReceiptHandles []types.DeleteMessageBatchRequestEntry
 	events := []eventhandler.Event{}
 	for _, message := range result.Messages {
-		fmt.Printf("Message ID: %s\n", *message.MessageId)
-		fmt.Printf("    Body: %s\n", *message.Body)
+		log.Printf("Message ID: %s\n", *message.MessageId)
+		log.Printf("    Body: %s\n", *message.Body)
 		for _, attr := range message.MessageAttributes {
-			fmt.Printf("    Attributes: %s\n", attr)
+			log.Printf("    Attributes: %v\n", attr)
 		}
 
 		event := SQSEvent{
 			ID:      *message.MessageId,
-			GroupID: *message.Attributes["MessageGroupId"],
+			GroupID: message.Attributes["MessageGroupId"],
 			Body:    *message.Body,
 		}
+
+		// Add each event to the list of events to be returned
 		events = append(events, &event)
+		// Add the message to the list of messages to be deleted
+		messageReceiptHandles = append(messageReceiptHandles, types.DeleteMessageBatchRequestEntry{
+			Id:            message.MessageId,
+			ReceiptHandle: message.ReceiptHandle,
+		})
+
+	}
+
+	// Delete the messages from the queue so to not receive them again
+	_, err = c.client.DeleteMessageBatch(ctx, &sqs.DeleteMessageBatchInput{
+		QueueUrl: &c.queueURL,
+		Entries:  messageReceiptHandles,
+	})
+	if err != nil {
+		log.Printf("Error deleting message %v", err)
+		return nil, err
 	}
 
 	for _, event := range events {
