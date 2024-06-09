@@ -17,7 +17,6 @@ func InitializeServer(port string, protoEndpoint string) {
 	defer cancel()
 
 	// Register gRPC server endpoint
-	// Note: Make sure the gRPC server is running properly and accessible
 	mux := runtime.NewServeMux(runtime.WithForwardResponseOption(httpResponseModifier))
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 	err := genproto.RegisterTaskServiceHandlerFromEndpoint(ctx, mux, protoEndpoint, opts)

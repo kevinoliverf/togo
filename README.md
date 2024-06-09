@@ -35,6 +35,14 @@ Via gRPC/Protobuf
 ```go test ./...```
 
 
+### Asynchronous Events
+
+This project is capable of integrating with AWS SQS to handle asynchronous requests.
+
+``` ./bin/proto_event_pusher -id <unique id> -name <task name> -queue <aws fifo endpoint> ```
+
+``` ./bin/event_handler -queue <aws fifo endpoint> ```
+
 ### Notes
 
 For quick setup, docker and docker-compose is used to handle dependencies.
