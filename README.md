@@ -1,13 +1,26 @@
 ### Prerequisites
 
 - docker, docker-compose
-- go 1.17
+- buf, protobuf, protobuf-go 
+- go 1.20
 - mysql(client)
 
 ### Setup
-To build and start the server:
+To generate protobuf code:
 
-```docker-compose up --build togo```
+``` buf generate```
+
+Through protoc:
+
+```protoc -I proto/ --go_out . --go-grpc_out . --grpc-gateway_out . proto/togo.proto```
+
+
+To build:
+
+```docker-compose build```
+
+To start:
+```docker-compose up -d```
 
 To setup the database: 
 
@@ -15,7 +28,13 @@ To setup the database:
 
 ### Sample API 
 
-```curl -v http://localhost:8000/users/1/tasks -X "POST" -d "{\"name\":\"tests\"}"```
+Via HTTP/JSON API
+
+```curl -v http://localhost:8080/v1/users/1/tasks -X "POST" -d "{\"name\":\"tests\"}"```
+
+Via gRPC/Protobuf
+
+```./bin/proto_client -addr "localhost:8081" -id 1 -name "tests"```
 
 ### Running tests
 

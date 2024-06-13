@@ -3,7 +3,7 @@ package test
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -11,7 +11,7 @@ import (
 
 var SuccessCode int = 0
 var MaxLimitCode int = 1
-var host string = "http://localhost:8000"
+var host string = "http://localhost:8080/v1"
 
 // Error represents our Error in JSON
 type Error struct {
@@ -20,8 +20,8 @@ type Error struct {
 }
 
 type Task struct {
-	ID     int64  `json:"id"`
-	UserID int64  `json:"user_id"`
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
 	Name   string `json:"name"`
 }
 
@@ -53,7 +53,7 @@ func CreateTask(userID int, taskName string) (int, *CreateTaskResult, error) {
 		return resp.StatusCode, nil, nil
 	}
 	//Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Failed to read resp body with error %v", err)
 		return 0, nil, err

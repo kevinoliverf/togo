@@ -121,7 +121,8 @@ func (s *Store) GetUser(userID int64) (*togo.User, error) {
 		log.Printf("Failed to query user counters with error: '%v'.", err)
 		return nil, err
 	}
-	counter.LastUpdated, _ = time.Parse(TimeFormat, lastUpdatedStr)
+	timestamp, _ := time.Parse(TimeFormat, lastUpdatedStr)
+	counter.LastUpdated = timestamp
 	user.DailyCounter = counter
 
 	return user, nil
@@ -131,15 +132,14 @@ func (s *Store) CreateUser(userID int64) (*togo.User, error) {
 	query := `
 		INSERT INTO users (id, daily_limit) values(?,0)
 	`
-	res, err := s.db.Exec(query, userID)
+	_, err := s.db.Exec(query, userID)
 	if err != nil {
 		log.Printf("Failed to create user with error: '%v'.", err)
 		return nil, err
 	}
-	id, _ := res.LastInsertId()
 
 	return &togo.User{
-		ID: id,
+		ID: userID,
 	}, nil
 }
 

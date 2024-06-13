@@ -21,7 +21,7 @@ var user2 *togo.User = &togo.User{
 	DailyLimit: 2,
 	DailyCounter: &togo.DailyCounter{
 		DailyCount:  3,
-		LastUpdated: time.Now().Add(-24 * time.Hour),
+		LastUpdated: time.Now().Add((-24 * time.Hour)),
 	},
 }
 

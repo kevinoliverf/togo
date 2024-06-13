@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -58,11 +59,11 @@ func TestCreateSuccess(t *testing.T) {
 	if createTaskRes.Task == nil {
 		t.Fatalf("Expected task field, got nil")
 	}
-	if createTaskRes.Task.UserID != int64(userID) {
-		t.Fatalf("Expected user ID %d, got %d", userID, createTaskRes.Task.UserID)
+	if createTaskRes.Task.UserID != strconv.Itoa(userID) {
+		t.Fatalf("Expected user ID %d, got %s", userID, createTaskRes.Task.UserID)
 	}
 	if createTaskRes.Task.Name != taskName {
-		t.Fatalf("Expected user ID %d, got %d", userID, createTaskRes.Task.UserID)
+		t.Fatalf("Expected user ID %d, got %s", userID, createTaskRes.Task.UserID)
 	}
 
 	// Verify database entries
