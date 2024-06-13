@@ -1,15 +1,16 @@
 syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
+import "buf/validate/validate.proto";
 
 package togo;
 
 option go_package = "internal/genproto";
 
 message Task{
-    int64 ID = 1 [json_name="id"];
-    int64 UserID = 2 [json_name="user_id"];
-    string Name = 3 [json_name="name"];
+    int64 ID = 1 [json_name="id", (buf.validate.field).int64.gt = 1 ];
+    int64 UserID = 2 [json_name="user_id", (buf.validate.field).int64.gt = 1];
+    string Name = 3 [json_name="name" , (buf.validate.field).string.min_len = 1];
 }
 
 message Error{
@@ -17,23 +18,13 @@ message Error{
     string ErrorDesc = 2 [json_name="err_desc"];
 }
 
-message User{
-    int64 ID = 1 [json_name="id"];
-    repeated Task Tasks = 2;
-    int32 DailyLimit = 3;
-    DailyCounter DailyCounter = 4;
-}
-
-message DailyCounter{
-    int64 ID = 1;
-    int64 UserID = 2;
-    int32 DailyCount = 3;
-    google.protobuf.Timestamp LastUpdated = 4;
-}
-
 message CreateTaskRequest{
-    int64 userID = 1;
-    string name = 2;
+    int64 userID = 1 [(buf.validate.field) = {
+        required: true,
+    }];
+    string name = 2 [(buf.validate.field) = {
+        required: true,
+    }];
 }
 
 message CreateTaskResponse{
