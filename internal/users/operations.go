@@ -3,14 +3,14 @@ package users
 import (
 	"log"
 
-	"github.com/kozloz/togo/internal/genproto"
+	"github.com/kozloz/togo"
 )
 
 // UserStore defines the interface needed to store the User resource.
 type UserStore interface {
-	GetUser(userID int64) (*genproto.User, error)
-	CreateUser(userID int64) (*genproto.User, error)
-	UpdateUser(user *genproto.User) (*genproto.User, error)
+	GetUser(userID int64) (*togo.User, error)
+	CreateUser(userID int64) (*togo.User, error)
+	UpdateUser(user *togo.User) (*togo.User, error)
 }
 
 // Operation is meant to be a reusable class to handle the User resource and logic.
@@ -27,7 +27,7 @@ func NewOperation(store UserStore) *Operation {
 }
 
 // Get gets the User given its ID
-func (o *Operation) Get(userID int64) (*genproto.User, error) {
+func (o *Operation) Get(userID int64) (*togo.User, error) {
 	log.Printf("Getting user with ID '%d'.", userID)
 	// Get user object
 	user, err := o.store.GetUser(userID)
@@ -39,7 +39,7 @@ func (o *Operation) Get(userID int64) (*genproto.User, error) {
 }
 
 // Create creates a user
-func (o *Operation) Create(userID int64) (*genproto.User, error) {
+func (o *Operation) Create(userID int64) (*togo.User, error) {
 	log.Printf("Creating user with ID '%d'.", userID)
 	// Create user object
 	user, err := o.store.CreateUser(userID)
@@ -51,7 +51,7 @@ func (o *Operation) Create(userID int64) (*genproto.User, error) {
 }
 
 // Update updates the user's attributes
-func (o *Operation) Update(user *genproto.User) (*genproto.User, error) {
+func (o *Operation) Update(user *togo.User) (*togo.User, error) {
 	log.Printf("Saving user object '%v'.", user)
 	// Update user object
 	user, err := o.store.UpdateUser(user)

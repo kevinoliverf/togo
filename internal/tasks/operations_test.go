@@ -36,7 +36,7 @@ func TestCreate(t *testing.T) {
 	}
 
 	expectedDailyCounter := 1
-	if user.DailyCounter.DailyCount != int32(expectedDailyCounter) {
+	if user.DailyCounter.DailyCount != expectedDailyCounter {
 		t.Errorf("Expected daily counter to be %d, got %d", expectedDailyCounter, user.DailyCounter.DailyCount)
 	}
 
@@ -52,7 +52,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Expected len user tasks to be %d, got %d", totalTasks, len(user.Tasks))
 	}
 	expectedDailyCounter = 2
-	if user.DailyCounter.DailyCount != int32(expectedDailyCounter) {
+	if user.DailyCounter.DailyCount != expectedDailyCounter {
 		t.Errorf("Expected daily counter to be %d, got %d", expectedDailyCounter, user.DailyCounter.DailyCount)
 	}
 	// Test that a user can't create more than the user's daily limit(3)
@@ -70,7 +70,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Expected len user tasks to be %d, got %d", totalTasks, len(user.Tasks))
 	}
 	expectedDailyCounter = 2
-	if user.DailyCounter.DailyCount != int32(expectedDailyCounter) {
+	if user.DailyCounter.DailyCount != expectedDailyCounter {
 		t.Errorf("Expected daily counter to be %d, got %d", expectedDailyCounter, user.DailyCounter.DailyCount)
 	}
 
@@ -94,7 +94,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Expected len user tasks to be %d, got %d", totalTasks, len(user2.Tasks))
 	}
 	expectedDailyCounter = 1
-	if user2.DailyCounter.DailyCount != int32(expectedDailyCounter) {
+	if user2.DailyCounter.DailyCount != expectedDailyCounter {
 		t.Errorf("Expected daily counter to be %d, got %d", expectedDailyCounter, user2.DailyCounter.DailyCount)
 	}
 }

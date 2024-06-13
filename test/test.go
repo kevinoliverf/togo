@@ -3,7 +3,7 @@ package test
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -53,7 +53,7 @@ func CreateTask(userID int, taskName string) (int, *CreateTaskResult, error) {
 		return resp.StatusCode, nil, nil
 	}
 	//Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("Failed to read resp body with error %v", err)
 		return 0, nil, err

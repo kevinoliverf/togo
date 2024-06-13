@@ -19,6 +19,6 @@ COPY --from=build /app/bin/json_handler /app/bin/json_handler
 EXPOSE 8080
 
 ENV PORT=8080
-ENV PROTO_ENDPOINT=togo-proto:8081
+ENV PROTO_ENDPOINT=proto-handler:8081
 
 CMD ["sh", "-c", "/app/bin/json_handler -port=${PORT} -proto-endpoint=${PROTO_ENDPOINT}"]

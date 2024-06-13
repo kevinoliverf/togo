@@ -7,8 +7,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/kozloz/togo/internal/genproto"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/kozloz/togo"
 )
 
 const TimeFormat = "2006-01-02 15:04:05"
@@ -35,7 +34,7 @@ func NewStore(dbName string, host string, port string, user string, pass string)
 	}, nil
 }
 
-func (s *Store) CreateTask(userID int64, task string) (*genproto.Task, error) {
+func (s *Store) CreateTask(userID int64, task string) (*togo.Task, error) {
 	log.Println("Creating task in database")
 	query := `
 		INSERT INTO tasks (user_id, name) values(?,?)
@@ -47,14 +46,14 @@ func (s *Store) CreateTask(userID int64, task string) (*genproto.Task, error) {
 	}
 	id, _ := res.LastInsertId()
 
-	return &genproto.Task{
+	return &togo.Task{
 		ID:     id,
 		UserID: userID,
 		Name:   task,
 	}, nil
 }
 
-func (s *Store) GetUserTasks(userID int64) ([]*genproto.Task, error) {
+func (s *Store) GetUserTasks(userID int64) ([]*togo.Task, error) {
 	log.Printf("Getting tasks of user '%d'.", userID)
 	query := `
 		SELECT id, name from tasks where user_id = ?
@@ -65,9 +64,9 @@ func (s *Store) GetUserTasks(userID int64) ([]*genproto.Task, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	var tasks []*genproto.Task
+	var tasks []*togo.Task
 	for rows.Next() {
-		task := &genproto.Task{}
+		task := &togo.Task{}
 		err := rows.Scan(&task.ID, &task.Name)
 		if err != nil {
 			log.Printf("Failed to scan user task with error: '%v'", err)
@@ -78,11 +77,11 @@ func (s *Store) GetUserTasks(userID int64) ([]*genproto.Task, error) {
 	return tasks, nil
 }
 
-func (s *Store) GetUser(userID int64) (*genproto.User, error) {
+func (s *Store) GetUser(userID int64) (*togo.User, error) {
 	log.Printf("Getting user with id '%d'", userID)
 
 	// Get user state
-	user := &genproto.User{}
+	user := &togo.User{}
 	selectUserQuery := `
 		SELECT id, daily_limit from users where id = ?
 	`
@@ -110,7 +109,7 @@ func (s *Store) GetUser(userID int64) (*genproto.User, error) {
 	user.Tasks = tasks
 
 	// Get user daily counter
-	counter := &genproto.DailyCounter{}
+	counter := &togo.DailyCounter{}
 	counterRow := s.db.QueryRow(selectCounterQuery, userID)
 	lastUpdatedStr := ""
 	err = counterRow.Scan(&counter.DailyCount, &lastUpdatedStr)
@@ -123,12 +122,12 @@ func (s *Store) GetUser(userID int64) (*genproto.User, error) {
 		return nil, err
 	}
 	timestamp, _ := time.Parse(TimeFormat, lastUpdatedStr)
-	counter.LastUpdated = timestamppb.New(timestamp)
+	counter.LastUpdated = timestamp
 	user.DailyCounter = counter
 
 	return user, nil
 }
-func (s *Store) CreateUser(userID int64) (*genproto.User, error) {
+func (s *Store) CreateUser(userID int64) (*togo.User, error) {
 	log.Println("Creating user in database")
 	query := `
 		INSERT INTO users (id, daily_limit) values(?,0)
@@ -139,12 +138,12 @@ func (s *Store) CreateUser(userID int64) (*genproto.User, error) {
 		return nil, err
 	}
 
-	return &genproto.User{
+	return &togo.User{
 		ID: userID,
 	}, nil
 }
 
-func (s *Store) UpdateUser(user *genproto.User) (*genproto.User, error) {
+func (s *Store) UpdateUser(user *togo.User) (*togo.User, error) {
 	log.Println("Updating user in database")
 
 	// Update user object
@@ -159,8 +158,8 @@ func (s *Store) UpdateUser(user *genproto.User) (*genproto.User, error) {
 		 INSERT INTO user_daily_counters (daily_count, last_updated, user_id) VALUES(?,?,?) 
 		 ON DUPLICATE KEY UPDATE daily_count = ?, last_updated = ?
 	`
-	_, err := s.db.Exec(query, user.DailyCounter.DailyCount, user.DailyCounter.LastUpdated.AsTime(), user.ID,
-		user.DailyCounter.DailyCount, user.DailyCounter.LastUpdated.AsTime())
+	_, err := s.db.Exec(query, user.DailyCounter.DailyCount, user.DailyCounter.LastUpdated, user.ID,
+		user.DailyCounter.DailyCount, user.DailyCounter.LastUpdated)
 	if err != nil {
 		log.Printf("Failed to update user with error: '%v'.", err)
 		return nil, err

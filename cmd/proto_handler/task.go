@@ -37,7 +37,7 @@ func (t *TaskHandler) CreateTask(ctx context.Context, createTaskReq *genproto.Cr
 		return createTaskResp, nil
 	}
 
-	createTaskResp.Task = task
+	createTaskResp.Task = TaskToGenProto(task)
 	resErr := CustomErrorToProto(errors.Success)
 	createTaskResp.Error = &resErr
 	log.Printf("Task created: %v", task)
