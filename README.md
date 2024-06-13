@@ -1,13 +1,19 @@
 ### Prerequisites
 
 - docker, docker-compose
+- buf, protobuf, protobuf-go 
 - go 1.20
 - mysql(client)
 
 ### Setup
 To generate protobuf code:
 
+``` buf generate```
+
+Through protoc:
+
 ```protoc -I proto/ --go_out . --go-grpc_out . --grpc-gateway_out . proto/togo.proto```
+
 
 To build:
 
