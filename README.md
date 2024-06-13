@@ -30,7 +30,7 @@ To setup the database:
 
 Via HTTP/JSON API
 
-```curl -v http://localhost:8080/users/1/tasks -X "POST" -d "{\"name\":\"tests\"}"```
+```curl -v http://localhost:8080/v1/users/1/tasks -X "POST" -d "{\"name\":\"tests\"}"```
 
 Via gRPC/Protobuf
 

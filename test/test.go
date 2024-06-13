@@ -11,7 +11,7 @@ import (
 
 var SuccessCode int = 0
 var MaxLimitCode int = 1
-var host string = "http://localhost:8080"
+var host string = "http://localhost:8080/v1"
 
 // Error represents our Error in JSON
 type Error struct {

@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/kozloz/togo/internal/genproto"
 	"google.golang.org/grpc"
@@ -18,14 +19,23 @@ func InitializeServer(port string, protoEndpoint string) {
 
 	// Register gRPC server endpoint
 	// Note: Make sure the gRPC server is running properly and accessible
-	mux := runtime.NewServeMux(runtime.WithForwardResponseOption(httpResponseModifier))
+	grpcmux := runtime.NewServeMux(runtime.WithForwardResponseOption(httpResponseModifier))
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	err := genproto.RegisterTaskServiceHandlerFromEndpoint(ctx, mux, protoEndpoint, opts)
+	err := genproto.RegisterTaskServiceHandlerFromEndpoint(ctx, grpcmux, protoEndpoint, opts)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
+	router := mux.NewRouter()
+	router.Use(loggingMiddleware)
+
+	// Match v1 api and strip before calling the proto handler
+	router.PathPrefix("/v1").Handler(http.StripPrefix("/v1",
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			grpcmux.ServeHTTP(w, r)
+		})))
+
 	// Start HTTP server (and proxy calls to gRPC server endpoint)
-	http.ListenAndServe(":"+port, mux)
+	http.ListenAndServe(":"+port, router)
 }

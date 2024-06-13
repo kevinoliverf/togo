@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
+	"net/http/httputil"
 	"strconv"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -28,4 +30,19 @@ func httpResponseModifier(ctx context.Context, w http.ResponseWriter, p proto.Me
 	}
 
 	return nil
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// Dump the request to log the wire
+		wire, err := httputil.DumpRequest(r, true)
+		if err != nil {
+			log.Fatalf("Failed to dump request: %v", err)
+			return
+		}
+		log.Println(string(wire))
+
+		next.ServeHTTP(w, r)
+	})
 }
